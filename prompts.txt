@@ -1,0 +1,5 @@
+Prompt 1:
+How do I define a new token in ANTLR for values like "10KB" or "150ms"?
+
+Prompt 2:
+Help me write a Java class that parses byte size strings like "1.5MB", "2GB", etc., and returns the value in bytes.
