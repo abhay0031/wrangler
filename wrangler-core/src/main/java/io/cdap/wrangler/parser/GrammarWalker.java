@@ -1,19 +1,3 @@
-/*
- * Copyright © 2021 Cask Data, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package io.cdap.wrangler.parser;
 
 import io.cdap.wrangler.api.CompileException;
@@ -24,6 +8,8 @@ import io.cdap.wrangler.api.DirectiveParseException;
 import io.cdap.wrangler.api.TokenGroup;
 import io.cdap.wrangler.api.parser.DirectiveName;
 import io.cdap.wrangler.api.parser.SyntaxError;
+import io.cdap.wrangler.api.parser.ByteSize;
+import io.cdap.wrangler.api.parser.TimeDuration;
 
 import java.util.Iterator;
 
@@ -36,7 +22,7 @@ public class GrammarWalker {
   private final DirectiveContext context;
 
   /**
-   * A visitor for the the recipe grammar.
+   * A visitor for the recipe grammar.
    * @param <E> type of the exception thrown by the {@link #visit(String, TokenGroup)} method
    */
   public interface Visitor<E extends Exception> {
@@ -58,8 +44,9 @@ public class GrammarWalker {
    * @throws DirectiveParseException if a directive in the recipe is invalid
    * @throws E if the visitor throws an exception
    */
-  public <E extends Exception> void walk(String recipe,
-                                         Visitor<E> visitor) throws CompileException, DirectiveParseException, E {
+  public <E extends Exception> void walk(String recipe, Visitor<E> visitor) 
+      throws CompileException, DirectiveParseException, E {
+
     CompileStatus status = compiler.compile(recipe);
     if (!status.isSuccess()) {
       Iterator<SyntaxError> errors = status.getErrors();
@@ -93,7 +80,23 @@ public class GrammarWalker {
                                    "unavailable. Please contact your administrator", command));
       }
 
-      visitor.visit(root, tokenGroup);;
+      // New code to convert ByteSize and TimeDuration tokens
+      for (int i = 0; i < tokenGroup.size(); i++) {
+        String tokenValue = tokenGroup.get(i).toString();
+        
+        // Check if the token is a ByteSize (KB, MB, GB, B)
+        if (tokenValue.matches("(?i)^\\d+(\\.\\d+)?(B|KB|MB|GB)$")) {
+          tokenGroup.set(i, new ByteSize(tokenValue));  // Replace with ByteSize token
+        }
+        
+        // Check if the token is a TimeDuration (ms, s, m)
+        else if (tokenValue.matches("(?i)^\\d+(\\.\\d+)?(ms|s|m)$")) {
+          tokenGroup.set(i, new TimeDuration(tokenValue));  // Replace with TimeDuration token
+        }
+      }
+
+      // Proceed with visiting the token group
+      visitor.visit(root, tokenGroup);
     }
   }
 }

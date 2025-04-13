@@ -64,6 +64,8 @@ directive
     | stringList
     | numberRanges
     | properties
+    | byteSize
+    | timeDuration
   )*?
   ;
 
@@ -167,6 +169,14 @@ bool
  : Bool
  ;
 
+byteSize
+ : ByteSize
+ ;
+
+timeDuration
+ : TimeDuration
+ ;
+
 condition
  : OBrace (~CBrace | condition)* CBrace
  ;
@@ -194,7 +204,6 @@ stringList
 identifierList
  : Identifier (',' Identifier)*
  ;
-
 
 /*
  * Following are the Lexer Rules used for tokenizing the recipe.
@@ -247,7 +256,6 @@ BackSlash: '\\';
 Dollar   : '$';
 Tilde    : '~';
 
-
 Bool
  : 'true'
  | 'false'
@@ -255,6 +263,14 @@ Bool
 
 Number
  : Int ('.' Digit*)?
+ ;
+
+ByteSize
+ : Int? [kKmMgGtTpPeE] [bB]
+ ;
+
+TimeDuration
+ : Int? [mshdMywMSHDMYW]
  ;
 
 Identifier
